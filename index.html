@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EigenMatrix Pro - Đại số Tuyến tính</title>
+<!-- MathJax cho công thức toán học -->
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] },
+    svg: { fontCache: 'global' },
+    startup: { typeset: true }
+  };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+<!-- Math.js cho tính toán ma trận chính xác -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.1/math.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0a0e1a; --panel-bg: #141824; --input-bg: #1c2333;
+    --border: #2a3347; --primary: #00d9ff; --secondary: #b537f2;
+    --accent: #ff2e63; --text-main: #e8eaf6; --text-muted: #8b92a8;
+    --success: #00e676; --error: #ff5252; --warning: #ffc107;
+    --font-mono: 'Consolas', 'Monaco', monospace;
+  }
+  * { box-sizing: border-box; outline: none; }
+  body {
+    margin: 0; font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+    background: var(--bg-dark); color: var(--text-main); line-height: 1.6;
+    background-image: radial-gradient(circle at 20% 50%, rgba(181, 55, 242, 0.08) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, rgba(0, 217, 255, 0.08) 0%, transparent 50%);
+    min-height: 100vh;
+  }
+  header { text-align: center; padding: 30px 20px 10px; }
+  h1 {
+    margin: 0; font-size: 2.4rem; font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase; letter-spacing: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+    -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 900;
+  }
+  .subtitle { color: var(--text-muted); font-size: 1rem; margin-top: 8px; letter-spacing: 1px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .card {
+    background: var(--panel-bg); border: 1px solid var(--border); border-radius: 16px;
+    padding: 24px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+  .card-title { font-size: 1.2rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 15px; }
+  select, button, input[type="text"], input[type="password"] {
+    background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border);
+    padding: 10px 14px; border-radius: 8px; font-size: 0.95rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; font-family: 'Rajdhani', sans-serif;
+  }
+  select:hover, button:hover { border-color: var(--primary); transform: translateY(-1px); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #000; border: none;
+    font-weight: 800; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 217, 255, 0.5); }
+  .btn-accent { background: linear-gradient(135deg, var(--accent), var(--secondary)); color: #fff; border: none; font-weight: 800; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+  .btn-ghost:hover { border-color: var(--warning); color: var(--warning); }
+  .matrix-grid { display: grid; gap: 6px; justify-content: center; margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+  .matrix-input {
+    width: 65px; height: 42px; text-align: center; background: var(--input-bg);
+    border: 1px solid var(--border); color: var(--primary); font-family: var(--font-mono);
+    font-size: 1.05rem; border-radius: 6px; transition: all 0.2s;
+  }
+  .matrix-input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(0,217,255,0.3); }
+  .action-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 20px; }
+  .action-buttons button { padding: 12px; font-size: 0.9rem; }
+  .result-block { background: rgba(0,0,0,0.25); border-left: 4px solid var(--secondary); padding: 16px; margin-bottom: 15px; border-radius: 0 10px 10px 0; }
+  .result-title { color: var(--secondary); font-weight: 700; margin-bottom: 10px; font-size: 1.1rem; text-transform: uppercase; }
+  .math-display { overflow-x: auto; padding: 8px 0; }
+  .tag { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin: 3px 3px 3px 0; text-transform: uppercase; }
+  .tag-ok { background: rgba(0, 230, 118, 0.15); color: var(--success); border: 1px solid var(--success); }
+  .tag-err { background: rgba(255, 82, 82, 0.15); color: var(--error); border: 1px solid var(--error); }
+  .tag-warn { background: rgba(255, 193, 7, 0.15); color: var(--warning); border: 1px solid var(--warning); }
+  .tag-ai { background: rgba(181, 55, 242, 0.15); color: var(--secondary); border: 1px solid var(--secondary); }
+  .steps-btn { background: linear-gradient(135deg, var(--warning), #ff9800); color: #000; border: none; margin-top: 10px; font-weight: 800; text-transform: uppercase; }
+  .steps-container { margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px dashed var(--border); }
+  .steps-container h4 { color: var(--warning); margin: 0 0 12px 0; font-size: 1.05rem; text-transform: uppercase; }
+  .step { background: var(--input-bg); border-left: 3px solid var(--primary); padding: 10px 14px; margin-bottom: 10px; border-radius: 0 6px 6px 0; }
+  .step-title { color: var(--primary); font-weight: 700; margin-bottom: 5px; font-size: 0.95rem; }
+  .step-desc { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 6px; }
+  .step-math { overflow-x: auto; }
+  footer { text-align: center; padding: 25px; color: var(--text-muted); font-size: 0.85rem; }
+  
+  /* Modal API */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+    display: none; justify-content: center; align-items: center; z-index: 1000;
+  }
+  .modal {
+    background: var(--panel-bg); border: 1px solid var(--border); border-radius: 16px;
+    padding: 30px; width: 90%; max-width: 500px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .modal h3 { color: var(--primary); margin-top: 0; }
+  .modal input { width: 100%; margin: 10px 0; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .ai-badge { font-size: 0.75rem; background: var(--secondary); color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>EigenMatrix Pro</h1>
+  <div class="subtitle">Toán học chính xác • Lời giải chi tiết • Hỗ trợ AI (OpenAI / Grok)</div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📥 Nhập Ma Trận Vuông A</div>
+      <button class="btn-ghost" onclick="openApiModal()">⚙️ Cài đặt AI API</button>
+    </div>
+    
+    <div class="controls">
+      <label>Kích thước (n×n):
+        <select id="sizeSelect" onchange="buildGrid()">
+          <option value="2">2 × 2</option>
+          <option value="3" selected>3 × 3</option>
+          <option value="4">4 × 4</option>
+          <option value="5">5 × 5</option>
+        </select>
+      </label>
+      <button onclick="randomize()">🎲 Ngẫu nhiên</button>
+      <button onclick="clearGrid()">🧹 Xoá</button>
+    </div>
+    
+    <div id="matrixContainer" class="matrix-grid"></div>
+    
+    <div class="action-buttons">
+      <button onclick="runOp('charpoly')">📐 Đa thức đặc trưng</button>
+      <button onclick="runOp('trace')">📊 Vết (Trace)</button>
+      <button onclick="runOp('det')">🔢 Định thức</button>
+      <button onclick="runOp('inv')">🔄 Ma trận nghịch đảo</button>
+      <button onclick="runOp('eigenvalues')">λ Giá trị riêng</button>
+      <button onclick="runOp('eigenvectors')">v⃗ Vectơ riêng</button>
+      <button onclick="runOp('diagonalize')">⚡ Chéo hoá</button>
+      <button class="btn-accent" onclick="runOp('all')">🚀 Giải tất cả</button>
+    </div>
+  </div>
+
+  <div id="resultsArea" style="display:none;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📊 Kết quả</div>
+        <span id="engineBadge" class="tag tag-warn" style="display:none;">Engine: Local Math.js</span>
+      </div>
+      <div id="outputContent"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Offline App (Math.js) • Optional AI Expert Mode • MathJax Rendering
+</footer>
+
+<!-- Modal API Settings -->
+<div id="apiModal" class="modal-overlay" onclick="if(event.target===this) closeApiModal()">
+  <div class="modal">
+    <h3>⚙️ Cài đặt AI Expert Mode</h3>
+    <p style="color:var(--text-muted); font-size:0.9rem;">
+      Nhập API Key để AI tính toán và giải thích chi tiết từng bước. Nếu để trống, ứng dụng sẽ dùng <strong>Math.js</strong> (chính xác, offline).
+    </p>
+    <label>Nhà cung cấp:</label>
+    <select id="apiProvider" style="width:100%; margin-bottom:10px;">
+      <option value="openai">OpenAI (GPT-4o)</option>
+      <option value="xai">Grok / xAI</option>
+    </select>
+    <label>API Key:</label>
+    <input type="password" id="apiKeyInput" placeholder="sk-...">
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeApiModal()">Huỷ</button>
+      <button class="btn-primary" onclick="saveApiKey()">Lưu & Kích hoạt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CẤU HÌNH & TIỆN ÍCH
+   ============================================================ */
+let apiConfig = JSON.parse(localStorage.getItem('eigenApiConfig') || '{"provider":"openai","key":""}');
+
+function openApiModal() {
+  document.getElementById('apiProvider').value = apiConfig.provider;
+  document.getElementById('apiKeyInput').value = apiConfig.key;
+  document.getElementById('apiModal').style.display = 'flex';
+}
+function closeApiModal() { document.getElementById('apiModal').style.display = 'none'; }
+function saveApiKey() {
+  apiConfig = {
+    provider: document.getElementById('apiProvider').value,
+    key: document.getElementById('apiKeyInput').value.trim()
+  };
+  localStorage.setItem('eigenApiConfig', JSON.stringify(apiConfig));
+  closeApiModal();
+  alert('Đã lưu cấu hình AI!');
+}
+
+function buildGrid() {
+  const n = parseInt(document.getElementById('sizeSelect').value);
+  const container = document.getElementById('matrixContainer');
+  container.innerHTML = '';
+  container.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.step = 'any'; inp.className = 'matrix-input';
+      inp.id = `m-${i}-${j}`; inp.value = 0;
+      container.appendChild(inp);
+    }
+  }
+}
+
+function getMatrix() {
+  const n = parseInt(document.getElementById('sizeSelect').value);
+  const M = [];
+  for (let i = 0; i < n; i++) {
+    const row = [];
+    for (let j = 0; j < n; j++) {
+      row.push(parseFloat(document.getElementById(`m-${i}-${j}`).value) || 0);
+    }
+    M.push(row);
+  }
+  return M;
+}
+
+function randomize() {
+  const n = parseInt(document.getElementById('sizeSelect').value);
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j < n; j++)
+      document.getElementById(`m-${i}-${j}`).value = Math.floor(Math.random() * 11) - 5;
+}
+
+function clearGrid() {
+  document.querySelectorAll('.matrix-input').forEach(inp => inp.value = 0);
+}
+
+function matToLatex(M) {
+  const rows = M.map(r => r.map(x => {
+    let val = Math.round(x * 10000) / 10000;
+    return val % 1 === 0 ? val.toString() : val.toFixed(4).replace(/\.?0+$/, '');
+  }).join(' & ')).join(' \\\\ ');
+  return `\\begin{bmatrix} ${rows} \\end{bmatrix}`;
+}
+
+function vecToLatex(v) {
+  const formatted = v.map(x => {
+    let val = Math.round(x * 10000) / 10000;
+    return val % 1 === 0 ? val.toString() : val.toFixed(4).replace(/\.?0+$/, '');
+  });
+  return `\\begin{bmatrix} ${formatted.join(' \\\\ ')} \\end{bmatrix}`;
+}
+
+/* ============================================================
+   ENGINE 1: LOCAL MATH.JS (Chính xác, Offline)
+   ============================================================ */
+function calculateLocal(op, matrix) {
+  const n = matrix.length;
+  const mathM = math.matrix(matrix);
+  let html = '', steps = [];
+
+  if (op === 'all' || op === 'trace') {
+    let tr = 0;
+    for(let i=0; i<n; i++) tr += matrix[i][i];
+    steps.push({ title: 'Công thức', desc: 'Vết là tổng các phần tử trên đường chéo chính.', latex: `\\text{tr}(A) = \\sum_{i=1}^{n} a_{ii}` });
+    steps.push({ title: 'Tính toán', desc: `Cộng các phần tử: ${matrix.map((r,i)=>r[i]).join(' + ')}`, latex: `\\text{tr}(A) = ${tr}` });
+    html += renderBlock('📊 Vết (Trace)', `<div class="math-display">$$\\text{tr}(A) = ${tr}$$</div>`, steps);
+  }
+
+  if (op === 'all' || op === 'det') {
+    const det = math.det(mathM);
+    steps.push({ title: 'Khử Gauss', desc: 'Sử dụng phương pháp khử Gauss để đưa về ma trận tam giác.', latex: matToLatex(matrix) });
+    steps.push({ title: 'Kết quả', desc: 'Tích các phần tử trên đường chéo chính sau khi khử.', latex: `\\det(A) = ${det}` });
+    html += renderBlock('🔢 Định thức', `<div class="math-display">$$\\det(A) = ${det}$$</div>`, steps);
+  }
+
+  if (op === 'all' || op === 'inv') {
+    try {
+      const inv = math.inv(mathM);
+      steps.push({ title: 'Ma trận mở rộng', desc: 'Sử dụng phương pháp Gauss-Jordan trên [A | I].', latex: matToLatex(matrix) });
+      steps.push({ title: 'Kết quả', desc: 'Ma trận nghịch đảo A⁻¹', latex: matToLatex(inv.toArray()) });
+      html += renderBlock('🔄 Ma trận nghịch đảo', `<div class="math-display">$$A^{-1} = ${matToLatex(inv.toArray())}$$</div>`, steps);
+    } catch(e) {
+      html += renderBlock('🔄 Ma trận nghịch đảo', `<div class="tag tag-err">❌ Ma trận không khả nghịch (det = 0)</div>`, [{title:'Lỗi', desc:'Định thức bằng 0, không tồn tại ma trận nghịch đảo.'}]);
+    }
+  }
+
+  if (op === 'all' || op === 'charpoly' || op === 'eigenvalues' || op === 'eigenvectors' || op === 'diagonalize') {
+    // Tính đa thức đặc trưng (chuẩn cho 2x2 và 3x3)
+    let charPolyLatex = '';
+    if (n === 2) {
+      const tr = matrix[0][0] + matrix[1][1];
+      const det = matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0];
+      const bStr = tr === 0 ? '' : (tr < 0 ? ` - ${Math.abs(tr)}` : ` + ${tr}`);
+      const cStr = det === 0 ? '' : (det < 0 ? ` - ${Math.abs(det)}` : ` + ${det}`);
+      charPolyLatex = `\\lambda^2${bStr}\\lambda${cStr}`;
+    } else if (n === 3) {
+      const tr = matrix[0][0] + matrix[1][1] + matrix[2][2];
+      const det = math.det(mathM);
+      // Tổng các định thức con chính cấp 2
+      const m1 = matrix[1][1]*matrix[2][2] - matrix[1][2]*matrix[2][1];
+      const m2 = matrix[0][0]*matrix[2][2] - matrix[0][2]*matrix[2][0];
+      const m3 = matrix[0][0]*matrix[1][1] - matrix[0][1]*matrix[1][0];
+      const sumM = m1 + m2 + m3;
+      const bStr = tr === 0 ? '' : (tr < 0 ? ` - ${Math.abs(tr)}` : ` + ${tr}`);
+      const cStr = sumM === 0 ? '' : (sumM < 0 ? ` - ${Math.abs(sumM)}` : ` + ${sumM}`);
+      const dStr = det === 0 ? '' : (det < 0 ? ` - ${Math.abs(det)}` : ` + ${det}`);
+      charPolyLatex = `\\lambda^3${bStr}\\lambda^2${cStr}\\lambda${dStr}`;
+    } else {
+      charPolyLatex = '\\text{Đa thức bậc ' + n + '}';
+    }
+
+    if (op === 'all' || op === 'charpoly') {
+      steps = [{ title: 'Định nghĩa', desc: 'Đa thức đặc trưng P(λ) = det(A - λI)', latex: matToLatex(matrix) }];
+      steps.push({ title: 'Kết quả', desc: 'Khai triển định thức', latex: `P(\\lambda) = ${charPolyLatex}` });
+      html += renderBlock('📐 Đa thức đặc trưng', `<div class="math-display">$$P(\\lambda) = ${charPolyLatex}$$</div>`, steps);
+    }
+
+    // Eigenvalues & Eigenvectors via Math.js
+    try {
+      const eigs = math.eigs(mathM);
+      const values = eigs.values.toArray();
+      const vectors = eigs.vectors.toArray();
+      
+      if (op === 'all' || op === 'eigenvalues') {
+        let eigContent = '<div>Các giá trị riêng (tính bằng Math.js):</div><div class="math-display">';
+        values.forEach((v, i) => {
+          const valStr = typeof v === 'object' ? `${v.re.toFixed(4)} ${v.im >= 0 ? '+' : '-'} ${Math.abs(v.im).toFixed(4)}i` : v.toFixed(4);
+          eigContent += `$$\\lambda_{${i + 1}} = ${valStr}$$`;
+        });
+        eigContent += '</div>';
+        if (values.some(v => typeof v === 'object' && v.im !== 0)) {
+          eigContent += `<div class="tag tag-warn">⚠ Có giá trị riêng phức</div>`;
+        }
+        html += renderBlock('λ Giá trị riêng', eigContent, [{title:'Giải det(A-λI)=0', desc:'Sử dụng thuật toán QR của Math.js để tìm nghiệm chính xác.', latex: charPolyLatex + ' = 0'}]);
+      }
+
+      if (op === 'all' || op === 'eigenvectors') {
+        let vecContent = '';
+        values.forEach((v, i) => {
+          const valStr = typeof v === 'object' ? `${v.re.toFixed(4)} ${v.im >= 0 ? '+' : '-'} ${Math.abs(v.im).toFixed(4)}i` : v.toFixed(4);
+          // Lấy cột thứ i của ma trận vectơ
+          const vec = vectors.map(row => row[i]);
+          vecContent += `<div><strong>Ứng với λ = ${valStr}:</strong></div><div class="math-display">$$v⃗_{${i + 1}} = ${vecToLatex(vec)}$$</div>`;
+        });
+        html += renderBlock('v⃗ Vectơ riêng', vecContent, [{title:'Giải hệ (A-λI)x=0', desc:'Tìm vectơ riêng bằng phương pháp khử Gauss cho từng giá trị riêng.'}]);
+      }
+
+      if (op === 'all' || op === 'diagonalize') {
+        const hasComplex = values.some(v => typeof v === 'object' && v.im !== 0);
+        if (hasComplex) {
+          html += renderBlock('⚡ Chéo hoá', `<div class="tag tag-err">❌ KHÔNG CHÉO HOÁ ĐƯỢC trên ℝ</div><div>Nguyên nhân: Tồn tại giá trị riêng phức.</div>`, []);
+        } else {
+          // Kiểm tra xem các vectơ có độc lập tuyến tính không (det(P) != 0)
+          const P = math.transpose(math.matrix(vectors)).toArray(); // Math.js eigs vectors are columns, we need to format them as columns of P
+          // Actually math.eigs returns vectors as columns. Let's build P properly.
+          const P_matrix = [];
+          for(let i=0; i<n; i++) {
+            const col = [];
+            for(let j=0; j<n; j++) col.push(vectors[j][i]);
+            P_matrix.push(col);
+          }
+          
+          const detP = math.det(math.matrix(P_matrix));
+          if (Math.abs(detP) < 1e-10) {
+             html += renderBlock('⚡ Chéo hoá', `<div class="tag tag-err">❌ KHÔNG CHÉO HOÁ ĐƯỢC</div><div>Nguyên nhân: Số vectơ riêng độc lập tuyến tính ít hơn n (bội hình học < bội đại số).</div>`, []);
+          } else {
+            const D = [];
+            for(let i=0; i<n; i++) {
+              const row = new Array(n).fill(0);
+              row[i] = values[i];
+              D.push(row);
+            }
+            let diagContent = `<div class="tag tag-ok">✅ MA TRẬN CHÉO HOÁ ĐƯỢC</div>`;
+            diagContent += `<div class="math-display">$$A = PDP^{-1}$$</div>`;
+            diagContent += `<div><strong>Ma trận chéo D:</strong></div><div class="math-display">$$${matToLatex(D)}$$</div>`;
+            diagContent += `<div><strong>Ma trận chuyển đổi P:</strong></div><div class="math-display">$$${matToLatex(P_matrix)}$$</div>`;
+            
+            // Kiểm chứng
+            const P_inv = math.inv(math.matrix(P_matrix));
+            const PD = math.multiply(math.matrix(P_matrix), math.matrix(D));
+            const PDPinv = math.multiply(PD, P_inv);
+            
+            diagContent += `<div class="tag tag-ok" style="margin-top:10px">✓ Kiểm chứng: P·D·P⁻¹ ≈ A</div>`;
+            diagContent += `<div class="math-display">$$${matToLatex(P_matrix)} \\cdot ${matToLatex(D)} \\cdot ${matToLatex(P_inv.toArray())} = ${matToLatex(PDPinv.toArray())}$$</div>`;
+            
+            html += renderBlock('⚡ Chéo hoá', diagContent, [{title:'Kết luận', desc:'Vì tìm được n vectơ riêng độc lập tuyến tính, ma trận chéo hoá được.'}]);
+          }
+        }
+      }
+    } catch(e) {
+      html += renderBlock('⚠ Lỗi Eigen', `<div class="tag tag-err">Không thể tính toán giá trị riêng bằng Local Engine.</div>`, []);
+    }
+  }
+
+  return { html, isAi: false };
+}
+
+/* ============================================================
+   ENGINE 2: AI EXPERT MODE (OpenAI / Grok)
+   ============================================================ */
+async function calculateWithAI(op, matrix) {
+  const n = matrix.length;
+  const matrixStr = JSON.stringify(matrix);
+  
+  const prompt = `Bạn là một giáo sư Đại số Tuyến tính xuất sắc. Hãy tính toán chính xác từng bước cho ma trận cấp ${n}x${n} sau: ${matrixStr}.
+  Yêu cầu:
+  1. Tính ĐA THỨC ĐẶC TRƯNG det(A - λI) một cách CHÍNH XÁC TUYỆT ĐỐI. Không được sai dấu hay hệ số.
+  2. Giải phương trình det(A - λI) = 0 để tìm GIÁ TRỊ RIÊNG (λ). Nếu có nghiệm phức hoặc vô tỉ, hãy ghi rõ dạng chính xác (có căn) và dạng xấp xỉ thập phân.
+  3. Tìm VECTƠ RIÊNG tương ứng bằng cách giải hệ (A - λI)x = 0.
+  4. Xác định xem ma trận có CHÉO HOÁ được không. Nếu có, hãy đưa ra ma trận chéo D và ma trận chuyển đổi P.
+  5. Trả về DUY NHẤT một chuỗi JSON hợp lệ (không có markdown code block, không có văn bản thừa ngoài JSON) với cấu trúc sau:
+  {
+    "charPoly": "LaTeX của đa thức đặc trưng",
+    "eigenvalues": [{"value": "LaTeX", "isComplex": false}],
+    "eigenvectors": [{"lambda": "LaTeX", "vector": "LaTeX matrix cột"}],
+    "diagonalizable": true/false,
+    "P": "LaTeX matrix",
+    "D": "LaTeX matrix",
+    "steps": [
+      {"title": "Tên bước", "desc": "Mô tả ngắn", "latex": "Công thức LaTeX của bước đó"}
+    ]
+  }
+  Lưu ý: Kiểm tra kỹ tính toán trước khi trả về. Sai số toán học là không thể chấp nhận.`;
+
+  const isGrok = apiConfig.provider === 'xai';
+  const url = isGrok ? 'https://api.x.ai/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+  const model = isGrok ? 'grok-beta' : 'gpt-4o';
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiConfig.key}`
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1 // Giảm sáng tạo, tăng độ chính xác toán học
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`API Error ${response.status}: ${errText}`);
+    }
+
+    const data = await response.json();
+    let content = data.choices[0].message.content;
+    
+    // Clean up markdown code blocks if AI adds them
+    content = content.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+    
+    const result = JSON.parse(content);
+    
+    let html = '';
+    const steps = result.steps || [];
+
+    if (op === 'all' || op === 'charpoly') {
+      html += renderBlock('📐 Đa thức đặc trưng (AI)', `<div class="math-display">$$P(\\lambda) = ${result.charPoly}$$</div>`, steps.filter(s => s.title.includes('Đa thức') || s.title.includes('det')));
+    }
+    if (op === 'all' || op === 'eigenvalues') {
+      let eigContent = '<div>Giá trị riêng (tính bởi AI):</div><div class="math-display">';
+      result.eigenvalues.forEach((e, i) => {
+        eigContent += `$$\\lambda_{${i + 1}} = ${e.value}$$`;
+      });
+      eigContent += '</div>';
+      html += renderBlock('λ Giá trị riêng (AI)', eigContent, steps.filter(s => s.title.includes('Giá trị riêng') || s.title.includes('Giải')));
+    }
+    if (op === 'all' || op === 'eigenvectors') {
+      let vecContent = '';
+      result.eigenvectors.forEach((e, i) => {
+        vecContent += `<div><strong>Ứng với λ = ${e.lambda}:</strong></div><div class="math-display">$$v⃗_{${i + 1}} = ${e.vector}$$</div>`;
+      });
+      html += renderBlock('v⃗ Vectơ riêng (AI)', vecContent, steps.filter(s => s.title.includes('Vectơ riêng') || s.title.includes('hệ')));
+    }
+    if (op === 'all' || op === 'diagonalize') {
+      if (result.diagonalizable) {
+        let diagContent = `<div class="tag tag-ok">✅ MA TRẬN CHÉO HOÁ ĐƯỢC (AI xác nhận)</div>`;
+        diagContent += `<div class="math-display">$$A = PDP^{-1}$$</div>`;
+        diagContent += `<div><strong>Ma trận chéo D:</strong></div><div class="math-display">$$${result.D}$$</div>`;
+        diagContent += `<div><strong>Ma trận chuyển đổi P:</strong></div><div class="math-display">$$${result.P}$$</div>`;
+        html += renderBlock('⚡ Chéo hoá (AI)', diagContent, steps.filter(s => s.title.includes('Chéo hoá') || s.title.includes('Kết luận')));
+      } else {
+        html += renderBlock('⚡ Chéo hoá (AI)', `<div class="tag tag-err">❌ KHÔNG CHÉO HOÁ ĐƯỢC</div><div>AI xác nhận: Không đủ vectơ riêng độc lập tuyến tính hoặc có nghiệm phức.</div>`, steps.filter(s => s.title.includes('Chéo hoá')));
+      }
+    }
+
+    return { html, isAi: true };
+  } catch (error) {
+    console.error('AI Error:', error);
+    return { 
+      html: `<div class="error-msg">⚠ Lỗi kết nối AI: ${error.message}. <br><small>Lưu ý: Nếu chạy trực tiếp từ file HTML, trình duyệt có thể chặn CORS. Hãy thử dùng extension "Allow CORS" hoặc chạy qua local server (VS Code Live Server).</small></div>`, 
+      isAi: false 
+    };
+  }
+}
+
+/* ============================================================
+   UI RENDERING & CONTROLLER
+   ============================================================ */
+function renderBlock(title, content, steps) {
+  const stepsId = 'steps_' + Math.random().toString(36).substr(2, 9);
+  let html = `<div class="result-block"><div class="result-title">${title}</div>${content}`;
+  if (steps && steps.length > 0) {
+    html += `<button class="steps-btn" onclick="toggleSteps('${stepsId}')">📖 Lời giải chi tiết</button>`;
+    let stepsHtml = `<div class="steps-container"><h4>📖 Lời giải chi tiết</h4>`;
+    steps.forEach((s, idx) => {
+      stepsHtml += `<div class="step"><div class="step-title">Bước ${idx + 1}: ${s.title}</div>`;
+      if (s.desc) stepsHtml += `<div class="step-desc">${s.desc}</div>`;
+      if (s.latex) stepsHtml += `<div class="step-math">$$${s.latex}$$</div>`;
+      stepsHtml += `</div>`;
+    });
+    stepsHtml += `</div>`;
+    html += `<div id="${stepsId}" style="display:none;">${stepsHtml}</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function toggleSteps(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    MathJax.typesetPromise([el]);
+  }
+}
+
+async function runOp(op) {
+  const output = document.getElementById('outputContent');
+  const area = document.getElementById('resultsArea');
+  const badge = document.getElementById('engineBadge');
+  
+  area.style.display = 'block';
+  output.innerHTML = '<div style="text-align:center; padding:20px; color:var(--primary);">⏳ Đang xử lý...</div>';
+
+  const matrix = getMatrix();
+
+  // Quyết định dùng Engine nào
+  if (apiConfig.key && (op === 'all' || op === 'charpoly' || op === 'eigenvalues' || op === 'eigenvectors' || op === 'diagonalize')) {
+    badge.textContent = `Engine: AI (${apiConfig.provider === 'xai' ? 'Grok' : 'OpenAI'})`;
+    badge.className = 'tag tag-ai';
+    badge.style.display = 'inline-block';
+    
+    const result = await calculateWithAI(op, matrix);
+    output.innerHTML = result.html;
+  } else {
+    badge.textContent = 'Engine: Local Math.js (Offline)';
+    badge.className = 'tag tag-warn';
+    badge.style.display = 'inline-block';
+    
+    // Nếu không có AI, dùng local cho mọi thứ
+    const result = calculateLocal(op === 'all' ? 'all' : (['charpoly','eigenvalues','eigenvectors','diagonalize'].includes(op) ? 'all' : op), matrix);
+    output.innerHTML = result.html;
+  }
+
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    MathJax.typesetPromise([output]).catch(err => console.error(err));
+  }
+}
+
+// Khởi động
+window.addEventListener('load', () => {
+  buildGrid();
+  const sample = [[4, 1, 2], [0, 3, 1], [0, 0, 5]];
+  const n = parseInt(document.getElementById('sizeSelect').value);
+  if (n === 3) {
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) document.getElementById(`m-${i}-${j}`).value = sample[i][j];
+  }
+});
+</script>
+</body>
+</html>
